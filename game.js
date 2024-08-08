@@ -251,7 +251,7 @@ setSolids([])
 let level = 0
 const levels = [
   map`
-....
+.1..
 ....
 ....
 ....`
@@ -286,9 +286,12 @@ function MoveAll(direction){
   switch(direction){
     case 1: //left
       moveLeft();
+      GenerateSquare(1);
+      
       break;
     case 2: // right
       moveRight();
+      
       break;
     case 3: //up
       moveUp();
@@ -299,24 +302,24 @@ function MoveAll(direction){
     default:
       break;
   }
+  
+  GenerateSquare(1);
 }
 
 function moveLeft() {
   const sprites = getAll();
-
+  console.log(sprites);
+  
   sprites.forEach(sprite => {
     let newX = sprite.x - 1;
 
     // Merge left until no more merges are possible
     while (newX >= 0) {
-      let nextSprite = getFirst(sprite => sprite.x === newX && sprite.y === sprite.y);
-
+      let nextSprite = getTile(newX, sprite.y)[0];
       if (nextSprite) {
         if (nextSprite.type === sprite.type) {
-          // Merge sprites if they have the same value
-          sprite.type = getNextCubeValue(sprite.type);
-          nextSprite.remove();
-          break; // Exit the loop after a successful merge
+          nextSprite.type = getNextCubeValue(sprite.type);
+          sprite.remove();
         } else {
           // Stop if there is a different value in the way
           break;
@@ -329,7 +332,70 @@ function moveLeft() {
       newX--;
     }
   });
+
+  sprites.forEach(sprite => {
+    let newX = sprite.x - 1;
+    while (newX >= 0) {
+      let nextSprite = getTile(newX, sprite.y)[0];
+      if (nextSprite) {
+        if (nextSprite.type === sprite.type) {
+        } else {
+          break;
+        }
+      } else {
+        sprite.x = newX;
+      }
+
+      newX--;
+    }
+  });
 }
+
+function moveRight() {
+  const sprites = getAll();
+  sprites.reverse();
+  
+  sprites.forEach(sprite => {
+    let newX = sprite.x + 1;
+
+    // Merge left until no more merges are possible
+    while (newX <= width()) {
+      let nextSprite = getTile(newX, sprite.y)[0];
+      if (nextSprite) {
+        if (nextSprite.type === sprite.type) {
+          nextSprite.type = getNextCubeValue(sprite.type);
+          sprite.remove();
+        } else {
+          // Stop if there is a different value in the way
+          break;
+        }
+      } else {
+        // No sprite to the left, move to the empty tile
+        sprite.x = newX;
+      }
+
+      newX++;
+    }
+  });
+
+  sprites.forEach(sprite => {
+    let newX = sprite.x + 1;
+    while (newX <= width()) {
+      let nextSprite = getTile(newX, sprite.y)[0];
+      if (nextSprite) {
+        if (nextSprite.type === sprite.type) {
+        } else {
+          break;
+        }
+      } else {
+        sprite.x = newX;
+      }
+
+      newX++;
+    }
+  });
+}
+
 
 function getNextCubeValue(currentValue) {
   switch(currentValue){
@@ -361,8 +427,6 @@ function getNextCubeValue(currentValue) {
 function checkMatch(direction){
   
 }
-
-GenerateSquare(4)
 setBackground(cell);
 
 function GenerateSquare(Amount){
