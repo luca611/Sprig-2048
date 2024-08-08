@@ -20,6 +20,7 @@ const cube1024 = '0'
 const cube2048 = 'w'
 
 const cell = 'c'; 
+const blackSquare ='b'
 
 setLegend(
   
@@ -244,6 +245,23 @@ setLegend(
 0..............0
 0..............0
 0000000000000000` ],
+  [ blackSquare, bitmap`
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000
+0000000000000000` ],
 )
 
 setSolids([])
@@ -254,32 +272,84 @@ const levels = [
 .1..
 ....
 ....
-....`
+....`,
+  map`
+w...
+....
+....
+...5`
 ]
 
 setMap(levels[level])
 
-
+var haslost = false;
 
 onInput("a", () => {
-  MoveAll(1);
+  if(!haslost){
+    MoveAll(1);
+  }
 })
 
 onInput("d", () => {
-  MoveAll(2);
+  if(!haslost){
+    MoveAll(2);
+  }
 })
 
 onInput("w", () => {
-  MoveAll(3);FFF
+  if(!haslost){
+    MoveAll(3);
+  }
 })
 
 onInput("s", () => {
-  MoveAll(4);
+  if(!haslost){
+    MoveAll(4);
+  }
+})
+
+onInput("k", () => {
+  if(haslost){
+    haslost = false; 
+    setMap(levels[0]);
+    setBackground(cell);
+    clearText();
+  }
 })
 
 
 afterInput(() => {
-  
+  if(haslost)return;
+  if(detectLose()){
+      clearText();
+      setBackground(blackSquare);
+      setMap(levels[1]);
+      addText("GAME OVER! :(", { 
+        x: 3,
+        y: 5,
+        color: color`3`
+      });
+      addText("press k to restart", { 
+        x: 1,
+        y: 8,
+        color: color`3`
+      });
+  }
+  else if(detectWin()){
+    clearText();
+    setBackground(blackSquare);
+      setMap(levels[1]);
+      addText("YOU WON!", { 
+        x: 3,
+        y: 5,
+        color: color`6`
+      });
+      addText("press k to restart", { 
+        x: 1,
+        y: 8,
+        color: color`6`
+      });
+    }
 })
 
 function MoveAll(direction){
@@ -308,12 +378,10 @@ function MoveAll(direction){
 
 function moveLeft() {
   const sprites = getAll();
-  console.log(sprites);
   
   sprites.forEach(sprite => {
     let newX = sprite.x - 1;
 
-    // Merge left until no more merges are possible
     while (newX >= 0) {
       let nextSprite = getTile(newX, sprite.y)[0];
       if (nextSprite) {
@@ -321,11 +389,9 @@ function moveLeft() {
           nextSprite.type = getNextCubeValue(sprite.type);
           sprite.remove();
         } else {
-          // Stop if there is a different value in the way
           break;
         }
       } else {
-        // No sprite to the left, move to the empty tile
         sprite.x = newX;
       }
 
@@ -358,7 +424,6 @@ function moveRight() {
   sprites.forEach(sprite => {
     let newX = sprite.x + 1;
 
-    // Merge left until no more merges are possible
     while (newX <= width()) {
       let nextSprite = getTile(newX, sprite.y)[0];
       if (nextSprite) {
@@ -366,11 +431,9 @@ function moveRight() {
           nextSprite.type = getNextCubeValue(sprite.type);
           sprite.remove();
         } else {
-          // Stop if there is a different value in the way
           break;
         }
       } else {
-        // No sprite to the left, move to the empty tile
         sprite.x = newX;
       }
 
@@ -392,6 +455,83 @@ function moveRight() {
       }
 
       newX++;
+    }
+  });
+}
+
+function moveUp() {
+  const sprites = getAll();
+  
+  sprites.forEach(sprite => {
+    let newY = sprite.y - 1;
+
+    while (newY >= 0) {
+      let nextSprite = getTile(sprite.x, newY)[0];
+      if (nextSprite) {
+        if (nextSprite.type === sprite.type) {
+          nextSprite.type = getNextCubeValue(sprite.type);
+          sprite.remove();
+        } else {
+          break;
+        }
+      } else {
+        sprite.y = newY;
+      }
+
+      newY--;
+    }
+  });
+
+  sprites.forEach(sprite => {
+    let newY = sprite.y - 1;
+    while (newY >= 0) {
+      let nextSprite = getTile(sprite.x, newY)[0];
+      if (!nextSprite) {
+        sprite.y = newY;
+      } else {
+        break;
+      }
+
+      newY--;
+    }
+  });
+}
+
+function moveDown() {
+  const sprites = getAll();
+  sprites.reverse();
+  
+  sprites.forEach(sprite => {
+    let newY = sprite.y + 1;
+
+    while (newY <= height()) {
+      let nextSprite = getTile(sprite.x, newY)[0];
+      if (nextSprite) {
+        if (nextSprite.type === sprite.type) {
+          nextSprite.type = getNextCubeValue(sprite.type);
+          sprite.remove();
+        } else {
+          break;
+        }
+      } else {
+        sprite.y = newY;
+      }
+
+      newY++;
+    }
+  });
+
+  sprites.forEach(sprite => {
+    let newY = sprite.y + 1;
+    while (newY <= height()) {
+      let nextSprite = getTile(sprite.x, newY)[0];
+      if (!nextSprite) {
+        sprite.y = newY;
+      } else {
+        break;
+      }
+
+      newY++;
     }
   });
 }
@@ -418,7 +558,7 @@ function getNextCubeValue(currentValue) {
     case cube512:
       return cube1024
     case cube1024:
-      return cube2048;
+      return cube2048;s
     default:
       return cube2048;
   }
@@ -429,14 +569,68 @@ function checkMatch(direction){
 }
 setBackground(cell);
 
-function GenerateSquare(Amount){
+function GenerateSquare(Amount) {
+  let tilesAvailable = 0;
   for (let i = 0; i < Amount; i++) {
-    let x, y;
-    do {
-      x = Math.floor(Math.random() * width());
-      y = Math.floor(Math.random() * height());
-      //the tile must be empty so i'll keep generating until a valid is found
-    } while (getTile(x, y).length > 0); 
-    addSprite(x, y, cube2);
+    let emptyFound = false;
+    for (let j = 0; j < width() * height(); j++) {
+      const x = Math.floor(Math.random() * width());
+      const y = Math.floor(Math.random() * height());
+      
+      if (getTile(x, y).length === 0) { 
+        addSprite(x, y, cube2);
+        emptyFound = true;
+        tilesAvailable++;
+        break;
+      }
+    }
+    
+    if (!emptyFound) {
+      break;
+    }
   }
+}
+
+function detectLose() {
+  
+  for (let y = 0; y < height(); y++) {
+    for (let x = 0; x < width(); x++) {
+      const tile = getTile(x, y)[0]; 
+
+      if (!tile) {
+        return false;
+      }
+
+      if (x < width ()) {
+        const rightTile = getTile(x + 1, y)[0];
+        if (rightTile && rightTile.type === tile.type) {
+          return false;
+        }
+      }
+
+      if (y < height()) {
+        const bottomTile = getTile(x, y + 1)[0];
+        if (bottomTile && bottomTile.type === tile.type) {
+          return false;
+        }
+      }
+    }
+  }
+
+  haslost = true;
+  return true;
+}
+
+function detectWin() {
+  for (let y = 0; y < height(); y++) {
+    for (let x = 0; x < width(); x++) {
+      const tile = getTile(x, y)[0];
+
+      if (tile && tile.type === cube2048) {
+        haslost = true; //i just need to avoid the player to play in the win/lost screen this var do not change that scree if was not clear yet
+        return true; // Win detected
+      }
+    }
+  }
+  return false;
 }
